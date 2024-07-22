@@ -1,0 +1,668 @@
+package com.assignment.demo.service;
+
+
+@ExtendWith(MockitoExtension.class)
+public class EmployeeServiceImplTest {
+
+    @Mock
+    private EmployeeRepository employeeRepository;
+
+    @InjectMocks
+    private EmployeeServiceImpl employeeService;
+
+    private Employee employee;
+
+    @BeforeEach
+    void setUp() {
+        employee = new Employee();
+        employee.setEmpId(1L);
+        employee.setEmpFirstName("John");
+        employee.setEmpLastName("Doe");
+        employee.setEmpGender("Male");
+        employee.setEmpEmail("john.doe@example.com");
+        employee.setEmpNumber("1234567890");
+        employee.setEmpDesignation("Software Engineer");
+    }
+
+    @Test
+    void testGetAllEmployees() {
+        List<Employee> employees = List.of(employee);
+        when(employeeRepository.findAll()).thenReturn(employees);
+
+        ResponseEntity<List<Employee>> response = employeeService.getAllEmployees();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody() != null && !response.getBody().isEmpty());
+        assertEquals(1, response.getBody().size());
+        assertEquals("John", response.getBody().get(0).getEmpFirstName());
+    }
+
+    @Test
+    void testGetEmployeeById_Found() {
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+
+        ResponseEntity<Employee> response = employeeService.getEmployeeById(1L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody() != null && response.getBody().getEmpId().equals(1L));
+    }
+
+    @Test
+    void testGetEmployeeById_NotFound() {
+        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseEntity<Employee> response = employeeService.getEmployeeById(1L);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void testCreateEmployee() {
+        when(employeeRepository.save(employee)).thenReturn(employee);
+
+        ResponseEntity<Employee> response = employeeService.createEmployee(employee);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(employee, response.getBody());
+    }
+
+    @Test
+    void testUpdateEmployee_Found() {
+        Employee updatedEmployee = new Employee();
+        updatedEmployee.setEmpId(1L);
+        updatedEmployee.setEmpFirstName("Jane");
+        updatedEmployee.setEmpLastName("Doe");
+        updatedEmployee.setEmpGender("Female");
+        updatedEmployee.setEmpEmail("jane.doe@example.com");
+        updatedEmployee.setEmpNumber("0987654321");
+        updatedEmployee.setEmpDesignation("Senior Engineer");
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.save(updatedEmployee)).thenReturn(updatedEmployee);
+
+        ResponseEntity<Employee> response = employeeService.updateEmployee(1L, updatedEmployee);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(updatedEmployee, response.getBody());
+    }
+
+    @Test
+    void testUpdateEmployee_NotFound() {
+        Employee updatedEmployee = new Employee();
+        updatedEmployee.setEmpId(1L);
+        updatedEmployee.setEmpFirstName("Jane");
+        updatedEmployee.setEmpLastName("Doe");
+        updatedEmployee.setEmpGender("Female");
+        updatedEmployee.setEmpEmail("jane.doe@example.com");
+        updatedEmployee.setEmpNumber("0987654321");
+        updatedEmployee.setEmpDesignation("Senior Engineer");
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseEntity<Employee> response = employeeService.updateEmployee(1L, updatedEmployee);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void testDeleteEmployee_Found() {
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+
+        ResponseEntity<Void> response = employeeService.deleteEmployee(1L);
+
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        verify(employeeRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void testDeleteEmployee_NotFound() {
+        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseEntity<Void> response = employeeService.deleteEmployee(1L);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        verify(employeeRepository, times(0)).deleteById(1L);
+    }
+}
+--------------------------------------Explanation-------------------------------------------------------
+
+
+1. Annotations:
+@ExtendWith(MockitoExtension.class): Integrates Mockito with JUnit 5, allowing for the use of Mockito's mocking capabilities.
+
+2. ===================================================================
+	-----------------------------------
+@Mock
+private EmployeeRepository employeeRepository;
+
+@InjectMocks
+private EmployeeServiceImpl employeeService;
+	-------------------------------
+@Mock: Creates a mock instance of EmployeeRepository.
+@InjectMocks: Creates an instance of EmployeeServiceImpl and injects the mocked EmployeeRepository into it.
+
+
+3. ====================================================================
+	----------------------------------
+private Employee employee;
+
+@BeforeEach
+void setUp() {
+    employee = new Employee();
+    employee.setEmpId(1L);
+    employee.setEmpFirstName("John");
+    employee.setEmpLastName("Doe");
+    employee.setEmpGender("Male");
+    employee.setEmpEmail("john.doe@example.com");
+    employee.setEmpNumber("1234567890");
+    employee.setEmpDesignation("Software Engineer");
+}
+	------------------------------------
+@BeforeEach: This method runs before each test, initializing the employee object with sample data.
+
+
+4. ===========================================================
+
+++++++++++++++++++++++ 1. testGetAllEmployees ++++++++++++++++++
+
+	--------------------------
+@Test
+void testGetAllEmployees() {
+    List<Employee> employees = List.of(employee);
+    when(employeeRepository.findAll()).thenReturn(employees);
+
+    ResponseEntity<List<Employee>> response = employeeService.getAllEmployees();
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertTrue(response.getBody() != null && !response.getBody().isEmpty());
+    assertEquals(1, response.getBody().size());
+    assertEquals("John", response.getBody().get(0).getEmpFirstName());
+}
+
+	----------------------------
+
+A. @Test
+Marks this method as a test method to be run by the JUnit test runner.
+
+B. List<Employee> employees = List.of(employee);
+Creates a list containing a single Employee object. This list simulates the data that the employeeRepository would return when its findAll method is called.
+
+c. when(employeeRepository.findAll()).thenReturn(employees);
+Uses Mockito's when method to specify that when employeeRepository.findAll() is called, it should return the employees list created above. This simulates the behavior of the repository without requiring a real database.
+
+d. ResponseEntity<List<Employee>> response = employeeService.getAllEmployees();
+Invokes the getAllEmployees method of the EmployeeServiceImpl class. This method is expected to return a ResponseEntity containing a list of Employee objects.
+
+e. assertEquals(HttpStatus.OK, response.getStatusCode());
+Asserts that the HTTP status code of the response is 200 OK. This verifies that the service method correctly sets the status code for a successful retrieval.
+
+f. assertTrue(response.getBody() != null && !response.getBody().isEmpty());
+Checks that the response body is not null and not empty. This ensures that the service method returns a list of employees and that it's not empty.
+
+g. assertEquals(1, response.getBody().size());
+Asserts that the size of the list in the response body is 1. This verifies that the list returned by the service method contains exactly one employee.
+
+h. assertEquals("John", response.getBody().get(0).getEmpFirstName());
+Confirms that the first employee in the list has the first name "John". This ensures that the correct employee data is included in the response.
+
+
+
+++++++++++++++++++++++ 2. testGetEmployeeById_Found ++++++++++++++++++
+	--------------------------------------------------------
+
+@Test
+void testGetEmployeeById_Found() {
+    when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+
+    ResponseEntity<Employee> response = employeeService.getEmployeeById(1L);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertTrue(response.getBody() != null && response.getBody().getEmpId().equals(1L));
+}
+	------------------------------------------------------------
+
+a. Mock Setup: 
+	when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee)) mocks the repository to return the employee.
+b. Assertions:
+	Checks if the status code is 200 OK.
+	Verifies the response body is not null and the employee ID is 1L.
+
+
+
+
+
+++++++++++++++++++++++ 3. testGetEmployeeById_NotFound ++++++++++++++++++
+	--------------------------------------------------------
+
+@Test
+void testGetEmployeeById_NotFound() {
+    when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
+
+    ResponseEntity<Employee> response = employeeService.getEmployeeById(1L);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+}
+
+	------------------------------------------------------------
+
+a. Mock Setup: 
+	when(employeeRepository.findById(1L)).thenReturn(Optional.empty()) mocks the repository to return an empty result.
+b. Assertions: 
+	Checks if the status code is 404 NOT FOUND.
+
+
+++++++++++++++++++++++ 4. testCreateEmployee ++++++++++++++++++
+	--------------------------------------------------------
+
+@Test
+void testCreateEmployee() {
+    when(employeeRepository.save(employee)).thenReturn(employee);
+
+    ResponseEntity<Employee> response = employeeService.createEmployee(employee);
+
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    assertEquals(employee, response.getBody());
+}
+
+
+	------------------------------------------------------------
+
+a. Mock Setup: 
+	when(employeeRepository.save(employee)).thenReturn(employee) mocks the repository to return the saved employee.
+b. Assertions:
+	Checks if the status code is 201 CREATED.
+	Verifies the response body matches the employee.
+
+
+++++++++++++++++++++++ 5. testUpdateEmployee_Found ++++++++++++++++++
+	--------------------------------------------------------
+
+@Test
+void testUpdateEmployee_Found() {
+    Employee updatedEmployee = new Employee();
+    updatedEmployee.setEmpId(1L);
+    updatedEmployee.setEmpFirstName("Jane");
+    updatedEmployee.setEmpLastName("Doe");
+    updatedEmployee.setEmpGender("Female");
+    updatedEmployee.setEmpEmail("jane.doe@example.com");
+    updatedEmployee.setEmpNumber("0987654321");
+    updatedEmployee.setEmpDesignation("Senior Engineer");
+
+    when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+    when(employeeRepository.save(updatedEmployee)).thenReturn(updatedEmployee);
+
+    ResponseEntity<Employee> response = employeeService.updateEmployee(1L, updatedEmployee);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(updatedEmployee, response.getBody());
+}
+	------------------------------------------------------------
+
+a. Mock Setup:
+	when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee)) mocks finding the original employee.
+	when(employeeRepository.save(updatedEmployee)).thenReturn(updatedEmployee) mocks saving the updated employee.
+b. Assertions:
+	Checks if the status code is 200 OK.
+	Verifies the response body matches the updatedEmployee.
+
+
+
+++++++++++++++++++++++ 6. testDeleteEmployee_Found ++++++++++++++++++
+	--------------------------------------------------------
+
+@Test
+void testDeleteEmployee_Found() {
+    when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+
+    ResponseEntity<Void> response = employeeService.deleteEmployee(1L);
+
+    assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+    verify(employeeRepository, times(1)).deleteById(1L);
+}
+
+}
+	------------------------------------------------------------
+
+a. Mock Setup: 
+	when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee)) mocks finding the employee.
+b. Assertions:
+	Checks if the status code is 204 NO CONTENT.
+	Verifies that the deleteById method of the repository was called once.
+
+
+++++++++++++++++++++++ 7. testDeleteEmployee_NotFound ++++++++++++++++++
+	--------------------------------------------------------
+
+@Test
+void testDeleteEmployee_NotFound() {
+    when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
+
+    ResponseEntity<Void> response = employeeService.deleteEmployee(1L);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    verify(employeeRepository, times(0)).deleteById(1L);
+}
+
+	------------------------------------------------------------
+a. Mock Setup: 
+	when(employeeRepository.findById(1L)).thenReturn(Optional.empty()) mocks the repository to return an empty result.
+b. Assertions:
+	Checks if the status code is 404 NOT FOUND.
+	Verifies that the deleteById method of the repository was not called.
+
+-----------------------------------------------Controller code ------------------------------------
+package com.assignment.demo.controller;
+
+
+
+@ExtendWith(MockitoExtension.class)
+@WebMvcTest(EmployeeController.class)
+public class EmployeeControllerTest {
+
+	@Autowired
+	private MockMvc mockMvc;
+
+	@MockBean
+	private EmployeeServiceImpl employeeService;
+
+	private Employee employee;
+
+	@BeforeEach
+	void setUp() {
+		employee = new Employee();
+		employee.setEmpId(1L);
+		employee.setEmpFirstName("John");
+		employee.setEmpLastName("Doe");
+		employee.setEmpGender("Male");
+		employee.setEmpEmail("john.doe@example.com");
+		employee.setEmpNumber("1234567890");
+		employee.setEmpDesignation("Software Engineer");
+	}
+
+	@Test
+	void testGetAllEmployees() throws Exception {
+		List<Employee> employees = List.of(employee);
+		when(employeeService.getAllEmployees()).thenReturn(new ResponseEntity<>(employees, HttpStatus.OK));
+
+		mockMvc.perform(get("/api/employees")).andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].empFirstName").value("John"))
+				.andExpect(jsonPath("$[0].empLastName").value("Doe"));
+	}
+
+	@Test
+    void testGetEmployeeById_Found() throws Exception {
+        when(employeeService.getEmployeeById(anyLong())).thenReturn(new ResponseEntity<>(employee, HttpStatus.OK));
+
+        mockMvc.perform(get("/api/employees/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.empFirstName").value("John"))
+                .andExpect(jsonPath("$.empLastName").value("Doe"));
+    }
+
+
+	@Test
+    void testCreateEmployee() throws Exception {
+        when(employeeService.createEmployee(any(Employee.class))).thenReturn(new ResponseEntity<>(employee, HttpStatus.CREATED));
+
+        mockMvc.perform(post("/api/employees")
+                .contentType("application/json")
+                .content("{\"empFirstName\":\"John\",\"empLastName\":\"Doe\",\"empGender\":\"Male\",\"empEmail\":\"john.doe@example.com\",\"empNumber\":\"1234567890\",\"empDesignation\":\"Software Engineer\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.empFirstName").value("John"))
+                .andExpect(jsonPath("$.empLastName").value("Doe"));
+    }
+
+	@Test
+	void testUpdateEmployee_Found() throws Exception {
+		Employee updatedEmployee = new Employee();
+		updatedEmployee.setEmpId(1L);
+		updatedEmployee.setEmpFirstName("Jane");
+		updatedEmployee.setEmpLastName("Doe");
+		updatedEmployee.setEmpGender("Female");
+		updatedEmployee.setEmpEmail("jane.doe@example.com");
+		updatedEmployee.setEmpNumber("0987654321");
+		updatedEmployee.setEmpDesignation("Senior Engineer");
+
+		when(employeeService.updateEmployee(anyLong(), any(Employee.class)))
+				.thenReturn(new ResponseEntity<>(updatedEmployee, HttpStatus.OK));
+
+		mockMvc.perform(put("/api/employees/1").contentType("application/json").content(
+				"{\"empFirstName\":\"Jane\",\"empLastName\":\"Doe\",\"empGender\":\"Female\",\"empEmail\":\"jane.doe@example.com\",\"empNumber\":\"0987654321\",\"empDesignation\":\"Senior Engineer\"}"))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.empFirstName").value("Jane"))
+				.andExpect(jsonPath("$.empLastName").value("Doe"));
+	}
+
+
+	@Test
+    void testDeleteEmployee_Found() throws Exception {
+        when(employeeService.deleteEmployee(anyLong())).thenReturn(new ResponseEntity<>(HttpStatus.NO_CONTENT));
+
+        mockMvc.perform(delete("/api/employees/1"))
+                .andExpect(status().isNoContent());
+
+        verify(employeeService, times(1)).deleteEmployee(1L);
+    }
+
+	@Test
+    void testDeleteEmployee_NotFound() throws Exception {
+        when(employeeService.deleteEmployee(anyLong())).thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(delete("/api/employees/1"))
+                .andExpect(status().isNotFound());
+
+        verify(employeeService, times(1)).deleteEmployee(1L);
+    }
+}
+
+-----------------------------explanation----------------------------------
+
+1. Annotations:
+
+	a. @ExtendWith(MockitoExtension.class)
+		--> @ExtendWith(MockitoExtension.class): Integrates Mockito with JUnit 5 for mocking.
+	b. @WebMvcTest(EmployeeController.class)
+		--> @WebMvcTest(EmployeeController.class): Configures a Spring context for testing the EmployeeController, providing a MockMvc instance to test the controller's endpoints.
+
+
+2. MockMvc:
+
+	@Autowired
+	private MockMvc mockMvc;
+	
+	--> MockMvc is used to perform HTTP requests and assert responses without starting the actual server.
+	   It allows testing the controller's behavior in isolation.
+
+3. Mock Service:
+
+	@MockBean
+	private EmployeeServiceImpl employeeService;
+		--> @MockBean creates a mock instance of EmployeeServiceImpl and injects it into the EmployeeController. 
+		    This allows you to simulate interactions with the service layer.
+
+4. Test Data Setup:
+
+	private Employee employee;
+
+	Test Data Setup:
+
+
+private Employee employee;
+
+@BeforeEach
+void setUp() {
+    employee = new Employee();
+    employee.setEmpId(1L);
+    employee.setEmpFirstName("John");
+    employee.setEmpLastName("Doe");
+    employee.setEmpGender("Male");
+    employee.setEmpEmail("john.doe@example.com");
+    employee.setEmpNumber("1234567890");
+    employee.setEmpDesignation("Software Engineer");
+}
+
+	--> Initializes a sample Employee object to be used in various tests.
+
+	############# 5. Test Methods ####################
+
+++++++++++++++++++++++ 1. testDeleteEmployee_Found ++++++++++++++++++
+	--------------------------------------------------------
+
+@Test
+void testGetAllEmployees() throws Exception {
+    List<Employee> employees = List.of(employee);
+    when(employeeService.getAllEmployees()).thenReturn(new ResponseEntity<>(employees, HttpStatus.OK));
+
+    mockMvc.perform(get("/api/employees"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].empFirstName").value("John"))
+            .andExpect(jsonPath("$[0].empLastName").value("Doe"));
+}
+
+	------------------------------------------------------------
+	
+	a. @Test
+	   void testGetAllEmployees() throws Exception {
+		--> @Test Annotation: Marks this method as a test method that should be executed by the JUnit test runner.
+
+	b. List<Employee> employees = List.of(employee);
+		--> employees List: Creates a list containing a single Employee object. This list is used as the expected return value when the getAllEmployees() method is called.
+
+	c. when(employeeService.getAllEmployees()).thenReturn(new ResponseEntity<>(employees, HttpStatus.OK));
+		--> when(...).thenReturn(...): Uses Mockito to define the behavior of the mock employeeService object.
+		--> employeeService.getAllEmployees(): Specifies that when this method is called, it should return a ResponseEntity 
+			containing the employees list with an HTTP status of 200 OK.
+
+	d. mockMvc.perform(get("/api/employees"))
+		--> mockMvc.perform(...): Uses MockMvc to simulate an HTTP request to the /api/employees endpoint.
+		--> get("/api/employees"): Specifies that the request is a GET request to the /api/employees URL.
+
+	e. .andExpect(status().isOk())
+	   .andExpect(jsonPath("$[0].empFirstName").value("John"))
+	   .andExpect(jsonPath("$[0].empLastName").value("Doe"));
+		--> andExpect(status().isOk()): Asserts that the HTTP response status is 200 OK. This confirms that the endpoint is functioning correctly and returns a successful response.
+		--> andExpect(jsonPath("$[0].empFirstName").value("John")): Uses jsonPath to verify that the JSON response contains the empFirstName field with the value "John" for the 			first employee in the list.
+		--> andExpect(jsonPath("$[0].empLastName").value("Doe")): Uses jsonPath to verify that the JSON response contains the empLastName field with the value "Doe" for the first 			employee in the list.
+
+
+++++++++++++++++++++++ 2. testGetEmployeeById_Found ++++++++++++++++++
+	--------------------------------------------------------
+
+@Test
+void testGetEmployeeById_Found() throws Exception {
+    when(employeeService.getEmployeeById(anyLong())).thenReturn(new ResponseEntity<>(employee, HttpStatus.OK));
+
+    mockMvc.perform(get("/api/employees/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.empFirstName").value("John"))
+            .andExpect(jsonPath("$.empLastName").value("Doe"));
+}
+
+
+	------------------------------------------------------------
+
+a. Setup: Mocks employeeService.getEmployeeById(anyLong()) to return the sample employee.
+b. Execution: Performs a GET request to /api/employees/1.
+c. Assertions: Verifies that the response status is 200 OK and the JSON response matches the expected employee data.
+
+
+
+++++++++++++++++++++++ 3. testCreateEmployee ++++++++++++++++++
+
+@Test
+void testCreateEmployee() throws Exception {
+    when(employeeService.createEmployee(any(Employee.class))).thenReturn(new ResponseEntity<>(employee, HttpStatus.CREATED));
+
+    mockMvc.perform(post("/api/employees")
+            .contentType("application/json")
+            .content("{\"empFirstName\":\"John\",\"empLastName\":\"Doe\",\"empGender\":\"Male\",\"empEmail\":\"john.doe@example.com\",\"empNumber\":\"1234567890\",\"empDesignation\":\"Software Engineer\"}"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.empFirstName").value("John"))
+            .andExpect(jsonPath("$.empLastName").value("Doe"));
+}	
+	------------------------------------------------------------
+
+a. Setup: Mocks employeeService.createEmployee(any(Employee.class)) to return the sample employee with 201 Created status.
+b. Execution: Performs a POST request to /api/employees with JSON content representing an employee.
+c. Assertions: Checks that the response status is 201 Created and verifies the employee's first and last names in the JSON response.
+
+
+
+++++++++++++++++++++++ 4. testUpdateEmployee_Found ++++++++++++++++++
+
+@Test
+void testUpdateEmployee_Found() throws Exception {
+    Employee updatedEmployee = new Employee();
+    updatedEmployee.setEmpId(1L);
+    updatedEmployee.setEmpFirstName("Jane");
+    updatedEmployee.setEmpLastName("Doe");
+    updatedEmployee.setEmpGender("Female");
+    updatedEmployee.setEmpEmail("jane.doe@example.com");
+    updatedEmployee.setEmpNumber("0987654321");
+    updatedEmployee.setEmpDesignation("Senior Engineer");
+
+    when(employeeService.updateEmployee(anyLong(), any(Employee.class)))
+            .thenReturn(new ResponseEntity<>(updatedEmployee, HttpStatus.OK));
+
+    mockMvc.perform(put("/api/employees/1").contentType("application/json").content(
+            "{\"empFirstName\":\"Jane\",\"empLastName\":\"Doe\",\"empGender\":\"Female\",\"empEmail\":\"jane.doe@example.com\",\"empNumber\":\"0987654321\",\"empDesignation\":\"Senior Engineer\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.empFirstName").value("Jane"))
+            .andExpect(jsonPath("$.empLastName").value("Doe"));
+}
+	
+	------------------------------------------------------------
+
+a. Setup: Mocks employeeService.updateEmployee(anyLong(), any(Employee.class)) to return the updated employee with 200 OK status.
+b. Execution: Performs a PUT request to /api/employees/1 with JSON content representing the updated employee.
+c. Assertions: Verifies that the response status is 200 OK and checks the updated employee data in the JSON response.
+
+
+
+
+
+++++++++++++++++++++++ 5. testDeleteEmployee_Found ++++++++++++++++++
+
+@Test
+void testDeleteEmployee_Found() throws Exception {
+    when(employeeService.deleteEmployee(anyLong())).thenReturn(new ResponseEntity<>(HttpStatus.NO_CONTENT));
+
+    mockMvc.perform(delete("/api/employees/1"))
+            .andExpect(status().isNoContent());
+
+    verify(employeeService, times(1)).deleteEmployee(1L);
+}
+
+	
+	------------------------------------------------------------
+
+a. Setup: Mocks employeeService.deleteEmployee(anyLong()) to return 204 No Content.
+b. Execution: Performs a DELETE request to /api/employees/1.
+c. Assertions: Verifies that the response status is 204 No Content and checks that the deleteEmployee method was called exactly once.
+
+
+
+++++++++++++++++++++++ 6. testDeleteEmployee_NotFound ++++++++++++++++++
+
+@Test
+void testDeleteEmployee_NotFound() throws Exception {
+    when(employeeService.deleteEmployee(anyLong())).thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+
+    mockMvc.perform(delete("/api/employees/1"))
+            .andExpect(status().isNotFound());
+
+    verify(employeeService, times(1)).deleteEmployee(1L);
+}
+
+
+	
+	------------------------------------------------------------
+
+a. Setup: Mocks employeeService.deleteEmployee(anyLong()) to return 404 Not Found.
+b. Execution: Performs a DELETE request to /api/employees/1.
+c. Assertions: Verifies that the response status is 404 Not Found and c
+
+
+
+
+
+
